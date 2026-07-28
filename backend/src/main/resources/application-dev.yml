@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: ${PINGLIX_DB_URL:jdbc:mysql://localhost:3306/pinglix?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${PINGLIX_DB_USERNAME:pinglix}
+    password: ${PINGLIX_DB_PASSWORD:pinglix_dev_password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+

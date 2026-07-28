@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+infrastructure/.env
+
+# Java / Maven
+backend/target/
+*.class
+*.log
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Visual Studio Code
+.vscode/
+
+# Frontend (Phase 2)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+

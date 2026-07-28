@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${PINGLIX_DB_URL}
+    username: ${PINGLIX_DB_USERNAME}
+    password: ${PINGLIX_DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+server:
+  forward-headers-strategy: framework
+
