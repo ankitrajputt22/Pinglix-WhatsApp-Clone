@@ -11,3 +11,14 @@ spring:
 server:
   forward-headers-strategy: framework
 
+pinglix:
+  cors:
+    allowed-origins: ${PINGLIX_CORS_ALLOWED_ORIGINS}
+  security:
+    jwt-secret: ${PINGLIX_JWT_SECRET}
+    access-token-ttl: ${PINGLIX_ACCESS_TOKEN_TTL:15m}
+    refresh-token-ttl: ${PINGLIX_REFRESH_TOKEN_TTL:30d}
+    access-cookie-name: pinglix_access
+    refresh-cookie-name: pinglix_refresh
+    secure-cookie: true
+    same-site: Lax

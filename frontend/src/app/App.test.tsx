@@ -23,6 +23,7 @@ function jsonResponse(body: unknown, status = 200) {
 describe("App", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
+    window.history.replaceState({}, "", "/health");
   });
 
   afterEach(() => {

@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:pinglix;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+pinglix:
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+  security:
+    jwt-secret: pinglix-integration-test-secret-that-is-longer-than-thirty-two-characters
+    access-token-ttl: 15m
+    refresh-token-ttl: 30d
+    access-cookie-name: pinglix_access
+    refresh-cookie-name: pinglix_refresh
+    secure-cookie: false
+    same-site: Lax
+
+logging:
+  level:
+    org.hibernate.SQL: off
+    in.pinglix.security.JwtAuthenticationFilter: debug
