@@ -6,15 +6,27 @@ export const API_BASE_URL = (
 
 type ApiErrorKind = "HTTP" | "NETWORK" | "RESPONSE";
 
+type ApiErrorBody = {
+  error?: unknown;
+  message?: unknown;
+};
+
 export class ApiClientError extends Error {
   readonly kind: ApiErrorKind;
   readonly status?: number;
+  readonly code?: string;
 
-  constructor(message: string, kind: ApiErrorKind, status?: number) {
+  constructor(
+    message: string,
+    kind: ApiErrorKind,
+    status?: number,
+    code?: string
+  ) {
     super(message);
     this.name = "ApiClientError";
     this.kind = kind;
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -43,6 +55,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     response = await fetch(createApiUrl(path), {
       ...init,
+      credentials: "include",
       headers: {
         Accept: "application/json",
         ...init.headers
@@ -53,10 +66,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 
   if (!response.ok) {
+    const errorBody = await readErrorBody(response);
+    const safeMessage =
+      response.status < 500 && typeof errorBody?.message === "string"
+        ? errorBody.message
+        : "The backend returned an error. Please try again.";
+
     throw new ApiClientError(
-      "The backend returned an error. Please try again.",
+      safeMessage,
       "HTTP",
-      response.status
+      response.status,
+      typeof errorBody?.error === "string" ? errorBody.error : undefined
     );
   }
 
@@ -73,10 +93,39 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 }
 
+async function readErrorBody(response: Response): Promise<ApiErrorBody | null> {
+  if (!response.headers.get("content-type")?.includes("application/json")) {
+    return null;
+  }
+
+  try {
+    const body = (await response.json()) as unknown;
+    return typeof body === "object" && body !== null
+      ? (body as ApiErrorBody)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export const apiClient = {
   get<T>(path: string, signal?: AbortSignal) {
     return request<T>(path, {
       method: "GET",
+      signal
+    });
+  },
+
+  post<T>(path: string, body?: unknown, signal?: AbortSignal) {
+    return request<T>(path, {
+      method: "POST",
+      body: body === undefined ? undefined : JSON.stringify(body),
+      headers:
+        body === undefined
+          ? undefined
+          : {
+              "Content-Type": "application/json"
+            },
       signal
     });
   }

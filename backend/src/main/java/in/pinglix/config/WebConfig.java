@@ -1,17 +1,16 @@
 package in.pinglix.config;
 
-import java.time.Duration;
-
+import org.springframework.context.annotation.Bean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(CorsProperties.class)
-public class WebConfig implements WebMvcConfigurer {
+public class WebConfig {
 
     private final CorsProperties corsProperties;
 
@@ -19,16 +18,21 @@ public class WebConfig implements WebMvcConfigurer {
         this.corsProperties = corsProperties;
     }
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        if (corsProperties.allowedOrigins().isEmpty()) {
-            return;
-        }
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(corsProperties.allowedOrigins());
+        configuration.setAllowedMethods(java.util.List.of(
+                HttpMethod.GET.name(),
+                HttpMethod.POST.name(),
+                HttpMethod.OPTIONS.name()
+        ));
+        configuration.setAllowedHeaders(java.util.List.of("Accept", "Content-Type"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
-        registry.addMapping("/api/v1/health")
-                .allowedOrigins(corsProperties.allowedOrigins().toArray(String[]::new))
-                .allowedMethods(HttpMethod.GET.name())
-                .allowedHeaders(HttpHeaders.ACCEPT, HttpHeaders.CONTENT_TYPE)
-                .maxAge(Duration.ofHours(1).toSeconds());
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
     }
 }
