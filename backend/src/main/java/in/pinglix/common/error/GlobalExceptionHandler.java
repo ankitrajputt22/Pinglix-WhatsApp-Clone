@@ -5,6 +5,8 @@ import java.time.Instant;
 import in.pinglix.auth.exception.AuthenticationRequiredException;
 import in.pinglix.auth.exception.DuplicateEmailException;
 import in.pinglix.auth.exception.InvalidCredentialsException;
+import in.pinglix.user.exception.InvalidUserSearchException;
+import in.pinglix.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +83,32 @@ public class GlobalExceptionHandler {
         return error(
                 HttpStatus.UNAUTHORIZED,
                 "AUTHENTICATION_REQUIRED",
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InvalidUserSearchException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidUserSearch(
+            InvalidUserSearchException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_ERROR",
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleUserNotFound(
+            UserNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.NOT_FOUND,
+                "RESOURCE_NOT_FOUND",
                 exception.getMessage(),
                 request
         );

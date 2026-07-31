@@ -10,7 +10,7 @@ spring:
 
 pinglix:
   cors:
-    allowed-origins: ${PINGLIX_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${PINGLIX_CORS_ALLOWED_ORIGINS:http://localhost:5174}
   security:
     jwt-secret: ${PINGLIX_JWT_SECRET:pinglix-local-development-secret-change-before-production-2026}
     access-token-ttl: ${PINGLIX_ACCESS_TOKEN_TTL:15m}

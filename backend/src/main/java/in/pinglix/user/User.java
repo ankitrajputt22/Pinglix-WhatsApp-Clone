@@ -68,6 +68,7 @@ public class User {
         this.email = email;
         this.passwordHash = passwordHash;
         this.displayName = displayName;
+        this.about = "Hey there! I am using Pinglix.";
     }
 
     @PrePersist
@@ -140,5 +141,14 @@ public class User {
 
     public void recordLogin(Instant loggedInAt) {
         lastLoginAt = loggedInAt;
+    }
+
+    public void changeAccountStatus(AccountStatus accountStatus) {
+        this.accountStatus = accountStatus;
+    }
+
+    public void markDeleted(Instant deletedAt) {
+        this.deletedAt = deletedAt;
+        this.accountStatus = AccountStatus.DELETED;
     }
 }

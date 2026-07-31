@@ -1,0 +1,206 @@
+package in.pinglix.user;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.Instant;
+import java.util.List;
+
+import in.pinglix.auth.RefreshTokenRepository;
+import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class UserIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @AfterEach
+    void cleanDatabase() {
+        refreshTokenRepository.deleteAll();
+        userRepository.deleteAll();
+    }
+
+    @Test
+    void returnsCurrentUserProfileWhenAuthenticated() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+
+        mockMvc.perform(get("/api/v1/users/me").cookie(accessCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("ankit@example.com"))
+                .andExpect(jsonPath("$.displayName").value("Ankit"))
+                .andExpect(jsonPath("$.about")
+                        .value("Hey there! I am using Pinglix."))
+                .andExpect(jsonPath("$.accountStatus").value("ACTIVE"));
+    }
+
+    @Test
+    void rejectsCurrentUserProfileWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/api/v1/users/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    void searchesUsersCaseInsensitivelyByNameOrEmail() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+        User ankush = saveUser("ankush@example.com", "Ankush");
+        User priya = saveUser("priya@example.com", "Priya");
+
+        mockMvc.perform(get("/api/v1/users/search")
+                        .param("query", "ANk")
+                        .cookie(accessCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(ankush.getId()))
+                .andExpect(jsonPath("$[0].email").value("ankush@example.com"));
+
+        assertThat(priya.getId()).isNotNull();
+    }
+
+    @Test
+    void rejectsSearchQueryShorterThanTwoTrimmedCharacters() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+
+        mockMvc.perform(get("/api/v1/users/search")
+                        .param("query", " a ")
+                        .cookie(accessCookie))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message")
+                        .value("Search query must be at least 2 characters"));
+    }
+
+    @Test
+    void excludesCurrentUserFromSearchResults() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+
+        mockMvc.perform(get("/api/v1/users/search")
+                        .param("query", "ankit")
+                        .cookie(accessCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void excludesDeletedUsersFromSearchResults() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+        User deleted = saveUser("deleted@example.com", "Deleted User");
+        deleted.markDeleted(Instant.now());
+        userRepository.save(deleted);
+
+        mockMvc.perform(get("/api/v1/users/search")
+                        .param("query", "deleted")
+                        .cookie(accessCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void excludesDisabledAndLockedUsersFromSearchResults() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+        User disabled = saveUser("disabled@example.com", "Unavailable Disabled");
+        disabled.changeAccountStatus(AccountStatus.DISABLED);
+        User locked = saveUser("locked@example.com", "Unavailable Locked");
+        locked.changeAccountStatus(AccountStatus.LOCKED);
+        userRepository.saveAll(List.of(disabled, locked));
+
+        mockMvc.perform(get("/api/v1/users/search")
+                        .param("query", "unavailable")
+                        .cookie(accessCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void returnsSafePublicUserById() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+        User target = saveUser("ankush@example.com", "Ankush");
+
+        mockMvc.perform(get("/api/v1/users/{id}", target.getId())
+                        .cookie(accessCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(target.getId()))
+                .andExpect(jsonPath("$.displayName").value("Ankush"))
+                .andExpect(jsonPath("$.about").isNotEmpty());
+    }
+
+    @Test
+    void returnsResourceNotFoundForMissingUser() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+
+        mockMvc.perform(get("/api/v1/users/{id}", 999999)
+                        .cookie(accessCookie))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("User not found"));
+    }
+
+    @Test
+    void neverIncludesSensitiveFieldsInUserResponses() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+        User target = saveUser("safe@example.com", "Safe User");
+
+        mockMvc.perform(get("/api/v1/users/{id}", target.getId())
+                        .cookie(accessCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.passwordHash").doesNotExist())
+                .andExpect(jsonPath("$.password_hash").doesNotExist())
+                .andExpect(jsonPath("$.lockedUntil").doesNotExist())
+                .andExpect(jsonPath("$.deletedAt").doesNotExist())
+                .andExpect(jsonPath("$.tokenHash").doesNotExist())
+                .andExpect(jsonPath("$.refreshTokens").doesNotExist());
+    }
+
+    private Cookie registerCurrentUser() throws Exception {
+        MvcResult registration = mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "ankit@example.com",
+                                  "displayName": "Ankit",
+                                  "password": "StrongPassword123!"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return cookie(registration, "pinglix_access");
+    }
+
+    private User saveUser(String email, String displayName) {
+        return userRepository.save(new User(email, "unused-password-hash", displayName));
+    }
+
+    private Cookie cookie(MvcResult result, String name) {
+        String prefix = name + "=";
+        String header = result.getResponse()
+                .getHeaders(HttpHeaders.SET_COOKIE)
+                .stream()
+                .filter(value -> value.startsWith(prefix))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Missing cookie " + name));
+        String value = header.substring(prefix.length(), header.indexOf(';'));
+        return new Cookie(name, value);
+    }
+}
