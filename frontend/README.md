@@ -8,4 +8,4 @@ npm install
 npm run dev
 ```
 
-The frontend runs at `http://localhost:5173`.
+The frontend runs at `http://localhost:5174`.

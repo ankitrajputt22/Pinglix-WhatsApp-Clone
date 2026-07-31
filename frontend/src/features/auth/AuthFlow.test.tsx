@@ -13,6 +13,11 @@ const authUser = {
   createdAt: "2026-07-30T12:00:00Z"
 };
 
+const userProfile = {
+  ...authUser,
+  about: "Hey there! I am using Pinglix."
+};
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -164,7 +169,9 @@ describe("authentication flow", () => {
   it("redirects to the protected app after successful login", async () => {
     const user = userEvent.setup();
     mockAnonymousSession();
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(authUser));
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse(authUser))
+      .mockResolvedValueOnce(jsonResponse(userProfile));
     renderAt("/login");
     await waitForLoginPage();
 
@@ -180,7 +187,9 @@ describe("authentication flow", () => {
   it("redirects to the protected app after successful registration", async () => {
     const user = userEvent.setup();
     mockAnonymousSession();
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(authUser, 201));
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse(authUser, 201))
+      .mockResolvedValueOnce(jsonResponse(userProfile));
     renderAt("/register");
     await waitForRegisterPage();
 
@@ -202,17 +211,20 @@ describe("authentication flow", () => {
   it("restores an expired access session through the refresh cookie", async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(unauthorizedResponse())
-      .mockResolvedValueOnce(jsonResponse(authUser));
+      .mockResolvedValueOnce(jsonResponse(authUser))
+      .mockResolvedValueOnce(jsonResponse(userProfile));
     renderAt("/app");
 
     expect(
       await screen.findByRole("heading", { name: "Welcome to Pinglix" })
     ).toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
 
   it("redirects an authenticated user away from login", async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(authUser));
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse(authUser))
+      .mockResolvedValueOnce(jsonResponse(userProfile));
     renderAt("/login");
 
     expect(
@@ -224,6 +236,7 @@ describe("authentication flow", () => {
     const user = userEvent.setup();
     vi.mocked(fetch)
       .mockResolvedValueOnce(jsonResponse(authUser))
+      .mockResolvedValueOnce(jsonResponse(userProfile))
       .mockResolvedValueOnce(
         jsonResponse({ message: "Logged out successfully" })
       );

@@ -13,7 +13,7 @@ spring:
 pinglix:
   cors:
     allowed-origins:
-      - http://localhost:5173
+      - http://localhost:5174
   security:
     jwt-secret: pinglix-integration-test-secret-that-is-longer-than-thirty-two-characters
     access-token-ttl: 15m
