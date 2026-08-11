@@ -11,6 +11,7 @@ public record CurrentUserResponse(
         String profileImageUrl,
         String about,
         AccountStatus accountStatus,
-        Instant createdAt
+        Instant createdAt,
+        Instant lastSeenAt
 ) {
 }

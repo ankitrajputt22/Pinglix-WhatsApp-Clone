@@ -2,6 +2,7 @@ import { Icon } from "../../../components/ui/Icon";
 import { MessageComposer } from "../../messages/components/MessageComposer";
 import { MessageList } from "../../messages/components/MessageList";
 import { RealtimeStatusIndicator } from "../../realtime/components/RealtimeStatusIndicator";
+import type { useConversationMessagesSubscription } from "../../realtime/hooks/useConversationMessagesSubscription";
 import type { RealtimeConnectionStatus } from "../../realtime/types/realtime.types";
 import { UserAvatar } from "../../users/components/UserAvatar";
 import { useConversation } from "../hooks/useConversation";
@@ -10,6 +11,7 @@ type SelectedConversationPlaceholderProps = {
   conversationId: number | null;
   currentUserId: number | null;
   realtimeStatus: RealtimeConnectionStatus;
+  conversationActivity: ReturnType<typeof useConversationMessagesSubscription>;
   onBack: () => void;
 };
 
@@ -17,6 +19,7 @@ export function SelectedConversationPlaceholder({
   conversationId,
   currentUserId,
   realtimeStatus,
+  conversationActivity,
   onBack
 }: SelectedConversationPlaceholderProps) {
   const conversation = useConversation(conversationId);
@@ -77,7 +80,15 @@ export function SelectedConversationPlaceholder({
                 {conversation.data.otherParticipant.displayName}
               </h2>
               <p className="truncate text-xs text-muted">
-                {conversation.data.otherParticipant.email}
+                {conversationActivity.typingUserId !== null
+                  ? "Typing..."
+                  : conversationActivity.presence.online
+                    ? "Online"
+                    : conversationActivity.presence.lastSeenAt
+                      ? `Last seen at ${new Date(conversationActivity.presence.lastSeenAt).toLocaleString()}`
+                      : conversation.data.otherParticipant.lastSeenAt
+                        ? `Last seen at ${new Date(conversation.data.otherParticipant.lastSeenAt).toLocaleString()}`
+                        : "Offline"}
               </p>
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">

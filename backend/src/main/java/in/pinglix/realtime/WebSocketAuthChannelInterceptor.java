@@ -15,6 +15,7 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Component
 public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
@@ -23,13 +24,27 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             "^/topic/conversations/([1-9][0-9]*)$"
     );
     private static final String USER_MESSAGE_QUEUE = "/user/queue/messages";
+    private static final Pattern TYPING_DESTINATION = Pattern.compile(
+            "^/app/conversations/([1-9][0-9]*)/typing\\.(start|stop)$"
+    );
 
     private final ConversationMemberRepository conversationMemberRepository;
+    private final PresenceService presenceService;
 
     public WebSocketAuthChannelInterceptor(
             ConversationMemberRepository conversationMemberRepository
     ) {
         this.conversationMemberRepository = conversationMemberRepository;
+        this.presenceService = null;
+    }
+
+    @Autowired
+    public WebSocketAuthChannelInterceptor(
+            ConversationMemberRepository conversationMemberRepository,
+            PresenceService presenceService
+    ) {
+        this.conversationMemberRepository = conversationMemberRepository;
+        this.presenceService = presenceService;
     }
 
     @Override
@@ -43,10 +58,25 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         }
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            requireCurrentUser(accessor.getUser());
+            if (presenceService != null) {
+                presenceService.markConnected(
+                        accessor.getSessionId(),
+                        requireCurrentUser(accessor.getUser())
+                );
+            } else {
+                requireCurrentUser(accessor.getUser());
+            }
         }
         if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
             authorizeSubscription(accessor);
+        }
+        if (StompCommand.SEND.equals(accessor.getCommand())) {
+            authorizeTypingSend(accessor);
+        }
+        if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
+            if (presenceService != null) {
+                presenceService.markDisconnected(accessor.getSessionId());
+            }
         }
         return message;
     }
@@ -73,6 +103,29 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             throw new AccessDeniedException("Subscription is not allowed");
         }
 
+        if (!conversationMemberRepository
+                .existsByConversationIdAndUserIdAndLeftAtIsNull(
+                        conversationId,
+                        currentUser.id()
+                )) {
+            throw new AccessDeniedException(
+                    "You do not have access to this conversation"
+            );
+        }
+        if (presenceService != null) {
+            presenceService.publishConversationSnapshot(conversationId);
+        }
+    }
+
+    private void authorizeTypingSend(StompHeaderAccessor accessor) {
+        CustomUserDetails currentUser = requireCurrentUser(accessor.getUser());
+        Matcher matcher = TYPING_DESTINATION.matcher(
+                accessor.getDestination() == null ? "" : accessor.getDestination()
+        );
+        if (!matcher.matches()) {
+            throw new AccessDeniedException("Message destination is not allowed");
+        }
+        Long conversationId = Long.valueOf(matcher.group(1));
         if (!conversationMemberRepository
                 .existsByConversationIdAndUserIdAndLeftAtIsNull(
                         conversationId,

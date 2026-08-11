@@ -4,6 +4,12 @@ import type {
   UserSearchResult
 } from "../types/user.types";
 
+export type UpdateProfilePayload = {
+  displayName: string;
+  about: string;
+  profileImageUrl: string;
+};
+
 function isPublicUser(value: unknown): value is UserSearchResult {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -30,6 +36,8 @@ function isUserProfile(value: unknown): value is UserProfile {
     (profile.accountStatus === undefined ||
       typeof profile.accountStatus === "string") &&
     (profile.createdAt === undefined || typeof profile.createdAt === "string")
+    && (profile.lastSeenAt === undefined || profile.lastSeenAt === null ||
+      typeof profile.lastSeenAt === "string")
   );
 }
 
@@ -41,6 +49,16 @@ export async function getCurrentUserProfile(
   signal?: AbortSignal
 ): Promise<UserProfile> {
   const response = await apiClient.get<unknown>("/api/v1/users/me", signal);
+  return isUserProfile(response) ? response : unexpectedResponse();
+}
+
+export async function updateProfile(
+  payload: UpdateProfilePayload
+): Promise<UserProfile> {
+  const response = await apiClient.patch<unknown>(
+    "/api/v1/users/me",
+    payload
+  );
   return isUserProfile(response) ? response : unexpectedResponse();
 }
 

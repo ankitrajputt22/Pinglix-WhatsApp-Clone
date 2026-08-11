@@ -137,6 +137,11 @@ public class AuthService {
                     .ifPresent(token -> token.revoke(Instant.now(), null));
         }
 
+        userRepository.findById(userId).ifPresent(user -> {
+            user.recordLastSeen(Instant.now());
+            userRepository.save(user);
+        });
+
         log.info("Logged out Pinglix user {}", userId);
     }
 

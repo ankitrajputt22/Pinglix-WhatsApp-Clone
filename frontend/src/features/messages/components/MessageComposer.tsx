@@ -3,6 +3,7 @@ import { type KeyboardEvent, useRef, useState } from "react";
 import { Icon } from "../../../components/ui/Icon";
 import { ApiClientError } from "../../../lib/api-client";
 import { useSendMessage } from "../hooks/useSendMessage";
+import { useTypingIndicator } from "../../realtime/hooks/useTypingIndicator";
 
 type MessageComposerProps = {
   conversationId: number;
@@ -24,6 +25,7 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const clientMessageIdRef = useRef<string | null>(null);
   const send = useSendMessage();
+  const typing = useTypingIndicator(conversationId);
   const trimmed = content.trim();
   const isTooLong = trimmed.length > 4000;
   const canSend = trimmed.length > 0 && !isTooLong && !send.isPending;
@@ -32,6 +34,7 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
     if (!canSend) {
       return;
     }
+    typing.stopTyping();
 
     clientMessageIdRef.current ??= globalThis.crypto.randomUUID();
     send.mutate(
@@ -79,6 +82,11 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
             value={content}
             onChange={(event) => {
               setContent(event.target.value);
+              if (event.target.value.trim()) {
+                typing.startTyping();
+              } else {
+                typing.stopTyping();
+              }
               clientMessageIdRef.current = null;
               if (send.isError) {
                 send.reset();

@@ -143,6 +143,20 @@ public class User {
         lastLoginAt = loggedInAt;
     }
 
+    public void recordLastSeen(Instant seenAt) {
+        lastSeenAt = seenAt;
+    }
+
+    public void updateProfile(
+            String displayName,
+            String about,
+            String profileImageUrl
+    ) {
+        this.displayName = displayName;
+        this.about = about;
+        this.profileImageUrl = profileImageUrl;
+    }
+
     public void changeAccountStatus(AccountStatus accountStatus) {
         this.accountStatus = accountStatus;
     }

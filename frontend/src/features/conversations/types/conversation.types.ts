@@ -6,6 +6,7 @@ export type ConversationParticipant = {
   displayName: string;
   profileImageUrl: string | null;
   about: string | null;
+  lastSeenAt?: string | null;
 };
 
 export type ConversationResponse = {

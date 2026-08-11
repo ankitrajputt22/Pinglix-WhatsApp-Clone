@@ -1,9 +1,13 @@
+import { useState } from "react";
+
 import { useCurrentUserProfile } from "../hooks/useCurrentUserProfile";
+import { ProfileEditForm } from "./ProfileEditForm";
 import { UserAvatar } from "./UserAvatar";
 
 const defaultAbout = "Hey there! I am using Pinglix.";
 
 export function CurrentUserCard() {
+  const [editing, setEditing] = useState(false);
   const { data: profile, error, isPending, refetch } =
     useCurrentUserProfile();
 
@@ -44,33 +48,50 @@ export function CurrentUserCard() {
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-3">
-          <UserAvatar
-            displayName={profile.displayName}
-            profileImageUrl={profile.profileImageUrl}
-            size="medium"
-          />
-          <dl className="min-w-0 flex-1">
-            <div>
-              <dt className="sr-only">Display name</dt>
-              <dd className="truncate text-sm font-semibold text-ink">
-                {profile.displayName}
-              </dd>
+        <>
+          {editing ? (
+            <ProfileEditForm
+              profile={profile}
+              onCancel={() => setEditing(false)}
+              onSaved={() => setEditing(false)}
+            />
+          ) : (
+            <div className="flex items-center gap-3">
+              <UserAvatar
+                displayName={profile.displayName}
+                profileImageUrl={profile.profileImageUrl}
+                size="medium"
+              />
+              <dl className="min-w-0 flex-1">
+                <div>
+                  <dt className="sr-only">Display name</dt>
+                  <dd className="truncate text-sm font-semibold text-ink">
+                    {profile.displayName}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="sr-only">Email</dt>
+                  <dd className="mt-0.5 truncate text-xs text-muted">
+                    {profile.email}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="sr-only">About</dt>
+                  <dd className="mt-1 truncate text-xs leading-5 text-ink/70">
+                    {profile.about || defaultAbout}
+                  </dd>
+                </div>
+              </dl>
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-pinglix-700 transition hover:bg-pinglix-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pinglix-600"
+              >
+                Edit Profile
+              </button>
             </div>
-            <div>
-              <dt className="sr-only">Email</dt>
-              <dd className="mt-0.5 truncate text-xs text-muted">
-                {profile.email}
-              </dd>
-            </div>
-            <div>
-              <dt className="sr-only">About</dt>
-              <dd className="mt-1 truncate text-xs leading-5 text-ink/70">
-                {profile.about || defaultAbout}
-              </dd>
-            </div>
-          </dl>
-        </div>
+          )}
+        </>
       )}
     </section>
   );

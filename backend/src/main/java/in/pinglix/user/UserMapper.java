@@ -28,7 +28,8 @@ public final class UserMapper {
                 user.getProfileImageUrl(),
                 user.getAbout(),
                 user.getAccountStatus(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getLastSeenAt()
         );
     }
 

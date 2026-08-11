@@ -128,5 +128,19 @@ export const apiClient = {
             },
       signal
     });
+  },
+
+  patch<T>(path: string, body?: unknown, signal?: AbortSignal) {
+    return request<T>(path, {
+      method: "PATCH",
+      body: body === undefined ? undefined : JSON.stringify(body),
+      headers:
+        body === undefined
+          ? undefined
+          : {
+              "Content-Type": "application/json"
+            },
+      signal
+    });
   }
 };

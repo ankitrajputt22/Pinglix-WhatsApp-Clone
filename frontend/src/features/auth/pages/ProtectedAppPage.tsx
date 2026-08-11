@@ -25,7 +25,7 @@ export function ProtectedAppPage() {
   const realtime = useRealtimeConnection(Boolean(user));
   const hasSelectedConversation = selectedConversationId !== null;
 
-  useConversationMessagesSubscription(
+  const conversationActivity = useConversationMessagesSubscription(
     selectedConversationId,
     realtime.status,
     user?.id ?? null
@@ -164,6 +164,7 @@ export function ProtectedAppPage() {
               conversationId={selectedConversationId}
               currentUserId={user?.id ?? null}
               realtimeStatus={realtime.status}
+              conversationActivity={conversationActivity}
               onBack={() => setSelectedConversationId(null)}
             />
           </section>

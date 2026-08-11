@@ -6,6 +6,7 @@ export type UserProfile = {
   about: string | null;
   accountStatus?: string;
   createdAt?: string;
+  lastSeenAt?: string | null;
 };
 
 export type UserSearchResult = {

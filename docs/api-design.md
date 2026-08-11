@@ -41,7 +41,14 @@ GET   /api/v1/users/search?query=
 GET   /api/v1/users/{id}
 ```
 
-Profile updates can be added later.
+The authenticated user can update only their own display name, about text, and
+profile image URL:
+
+```http
+PATCH /api/v1/users/me
+```
+
+Email and password changes are not part of this endpoint.
 
 ## Conversations
 
@@ -108,6 +115,15 @@ Both routes accept `{ "messageIds": [101, 102] }`. The response reports the
 newly updated IDs, count, status, and timestamp. A read update also sets the
 delivered time when it is still empty. Messages sent by the current user have
 their `SENT`, `DELIVERED`, or `READ` status derived from recipient receipts.
+
+### Advanced Messaging (Phase 10)
+
+Phase 10 adds profile editing through `PATCH /api/v1/users/me`. It also adds
+typing and presence events through the existing WebSocket connection. Typing
+events are sent only for the selected conversation and are not stored.
+
+The current user is identified from the authenticated session. A user must be
+an active conversation member before sending typing events.
 
 ## Error Response
 

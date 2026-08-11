@@ -36,10 +36,12 @@ The MVP includes:
 - Previous message history
 - Recent conversations
 - Real-time messages with WebSocket/STOMP
+- Profile editing, typing indicators, online/offline presence, and last seen
 - Protected routes and APIs
 - A basic responsive interface
 
-The MVP does not include groups, attachments, calls, read receipts, typing indicators, presence, or message reactions.
+The MVP does not include groups, attachments, calls, reactions, forwarding, or
+message editing and deletion.
 
 ## Main Technology
 
@@ -144,6 +146,10 @@ conversation and use the Back to Conversations button to return to the list.
 The message composer also supports Enter to send and Shift+Enter for a new
 line. Phase 8 does not add message status or other advanced chat features.
 
+Phase 10 adds profile editing, temporary typing indicators, basic in-memory
+online/offline presence, and a saved last-seen time. It does not add groups,
+attachments, calls, reactions, or message editing.
+
 ## Health Check
 
 When the backend is running, check:
@@ -154,4 +160,5 @@ http://localhost:8081/api/v1/health
 
 ## Future Improvements
 
-Later versions may add message status, typing indicators, presence, groups, attachments, notifications, and better production deployment support.
+Later versions may add groups, attachments, notifications, and better
+production deployment support.
