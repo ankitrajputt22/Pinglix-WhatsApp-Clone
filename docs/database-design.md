@@ -15,11 +15,10 @@ The database uses:
 
 Tables must not be created by hand. Every schema change must use Flyway.
 
-## Phase 1 Scope
+## Current MVP Scope
 
-The Phase 1 plan uses only a small initial Flyway migration. It does not create users, conversations, members, messages, receipts, or attachments.
-
-This repository is currently on the Phase 5 branch. It already has authentication and conversation migrations from later phases. They are kept so working Phase 3–5 features are not deleted.
+The current MVP uses the authentication, conversation, message, and receipt
+migrations listed below. No Phase 11 schema migration was needed.
 
 ## Users
 
@@ -36,6 +35,10 @@ The `users` table stores:
 - Soft delete time
 
 Email must be unique.
+
+`last_seen_at` is updated when a user logs out or their last WebSocket session
+disconnects. Online presence itself is kept in memory and is not stored in a
+separate table.
 
 ## Conversations
 
@@ -122,3 +125,5 @@ Attachments can be added later. MySQL should store file details only. The real f
 - `V4__create_message_receipts_table.sql`
 
 Attachments will use a later migration.
+
+Phase 11 does not add attachments or any other unsupported table.

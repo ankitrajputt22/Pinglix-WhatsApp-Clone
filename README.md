@@ -22,7 +22,8 @@ The first complete flow is:
 6. Save the message in MySQL
 7. Receive the message in real time
 
-Advanced features will be added only after this flow works well.
+The MVP also includes profile editing, typing indicators, basic presence, and
+last seen. It does not include unsupported chat features listed below.
 
 ## MVP Scope
 
@@ -116,6 +117,14 @@ cd backend
 ```bash
 cd frontend
 npm test
+npm run build
+```
+
+Build the backend package:
+
+```bash
+cd backend
+./mvnw clean package
 ```
 
 More project details are available in the `docs` folder.
@@ -132,7 +141,8 @@ More project details are available in the `docs` folder.
 - Phase 7: Real-time messaging
 - Phase 8: UI improvements
 - Phase 9: Message status
-- Phase 10: Advanced features
+- Phase 10: Advanced messaging foundation
+- Phase 11: MVP stabilization, QA, and documentation
 
 Each phase should be completed and tested before the next one starts.
 
@@ -150,6 +160,9 @@ Phase 10 adds profile editing, temporary typing indicators, basic in-memory
 online/offline presence, and a saved last-seen time. It does not add groups,
 attachments, calls, reactions, or message editing.
 
+Phase 11 checks the existing MVP, improves test isolation, and records setup,
+security, testing, and feature-status notes. It does not add product features.
+
 ## Health Check
 
 When the backend is running, check:
@@ -157,6 +170,15 @@ When the backend is running, check:
 ```text
 http://localhost:8081/api/v1/health
 ```
+
+## Known Limitations
+
+- Presence is stored in memory and resets when the backend restarts.
+- The MVP supports private text conversations only.
+- Local development uses a non-secure cookie setting; production must use HTTPS
+  and secure cookies.
+- CSRF protection is disabled for this local MVP and must be reviewed before a
+  cross-site production deployment.
 
 ## Future Improvements
 

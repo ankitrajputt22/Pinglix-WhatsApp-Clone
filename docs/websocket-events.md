@@ -2,8 +2,8 @@
 
 ## Purpose
 
-WebSocket/STOMP is added in Phase 7. It sends a live event after a text
-message is saved through REST.
+WebSocket/STOMP sends live events after a text message is saved through REST.
+Phase 10 also uses the connection for typing and basic presence events.
 
 The WebSocket endpoint is:
 
@@ -129,3 +129,6 @@ These events can be added later:
 
 Attachments, calls, groups, reactions, and other advanced events are not part
 of the current implementation.
+
+The broker uses in-memory presence for this MVP. A backend restart clears online
+users; the saved `lastSeenAt` value remains in MySQL.

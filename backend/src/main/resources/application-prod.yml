@@ -3,9 +3,9 @@ spring:
     activate:
       on-profile: prod
   datasource:
-    url: ${PINGLIX_DB_URL}
-    username: ${PINGLIX_DB_USERNAME}
-    password: ${PINGLIX_DB_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:${PINGLIX_DB_URL}}
+    username: ${SPRING_DATASOURCE_USERNAME:${PINGLIX_DB_USERNAME}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${PINGLIX_DB_PASSWORD}}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 server:
@@ -20,5 +20,5 @@ pinglix:
     refresh-token-ttl: ${PINGLIX_REFRESH_TOKEN_TTL:30d}
     access-cookie-name: pinglix_access
     refresh-cookie-name: pinglix_refresh
-    secure-cookie: true
+    secure-cookie: ${PINGLIX_COOKIE_SECURE:true}
     same-site: Lax
