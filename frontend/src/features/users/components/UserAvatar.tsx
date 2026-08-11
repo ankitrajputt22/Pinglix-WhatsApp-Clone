@@ -1,7 +1,7 @@
 type UserAvatarProps = {
   displayName: string;
   profileImageUrl: string | null;
-  size?: "small" | "large";
+  size?: "small" | "medium" | "large";
 };
 
 export function UserAvatar({
@@ -16,14 +16,19 @@ export function UserAvatar({
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
       .join("") || "?";
-  const sizing = size === "large" ? "h-16 w-16 text-xl" : "h-11 w-11 text-sm";
+  const resolvedSizing =
+    size === "large"
+      ? "h-16 w-16 text-xl"
+      : size === "medium"
+        ? "h-12 w-12 text-sm"
+        : "h-10 w-10 text-sm";
 
   if (profileImageUrl) {
     return (
       <img
         src={profileImageUrl}
         alt={`${displayName} profile`}
-        className={`${sizing} shrink-0 rounded-2xl object-cover`}
+        className={`${resolvedSizing} shrink-0 rounded-full border border-slate-200 object-cover shadow-sm`}
       />
     );
   }
@@ -31,7 +36,7 @@ export function UserAvatar({
   return (
     <span
       aria-label={`${displayName} profile placeholder`}
-      className={`${sizing} flex shrink-0 items-center justify-center rounded-2xl bg-pinglix-100 font-bold text-pinglix-700`}
+      className={`${resolvedSizing} flex shrink-0 items-center justify-center rounded-full border border-pinglix-200 bg-pinglix-100 font-bold text-pinglix-800 shadow-sm`}
     >
       {initials}
     </span>

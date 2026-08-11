@@ -54,10 +54,9 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        String refreshToken = cookieService.readRefreshToken(request)
-                .orElseThrow(AuthenticationRequiredException::new);
-
         try {
+            String refreshToken = cookieService.readRefreshToken(request)
+                    .orElseThrow(AuthenticationRequiredException::new);
             return setSessionCookies(authService.refresh(refreshToken), response);
         } catch (AuthenticationRequiredException exception) {
             cookieService.clearAuthenticationCookies(response);

@@ -4,23 +4,39 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#17352d",
-        muted: "#60756f",
+        ink: "#191c1e",
+        muted: "#596663",
+        surface: {
+          DEFAULT: "#f7f9fb",
+          low: "#f2f4f6",
+          container: "#eceef0",
+          high: "#e6e8ea"
+        },
         pinglix: {
-          50: "#effcf7",
-          100: "#d9f7eb",
-          200: "#b5edd9",
-          300: "#84dcc1",
-          400: "#4fc4a3",
-          500: "#29a886",
-          600: "#1c886e",
-          700: "#196d5a",
-          800: "#185749",
-          900: "#16483e"
+          50: "#effcf9",
+          100: "#d4f5ef",
+          200: "#a9e9de",
+          300: "#72d5c8",
+          400: "#3bb9ac",
+          500: "#16998e",
+          600: "#087f76",
+          700: "#00685f",
+          800: "#00544d",
+          900: "#003d38"
         }
       },
       boxShadow: {
-        card: "0 28px 80px -34px rgba(22, 72, 62, 0.32)"
+        card: "0 18px 45px -24px rgba(25, 28, 30, 0.28)",
+        panel: "0 8px 26px -18px rgba(25, 28, 30, 0.3)"
+      },
+      animation: {
+        "fade-in": "fadeIn 320ms ease-out both"
+      },
+      keyframes: {
+        fadeIn: {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" }
+        }
       }
     }
   },

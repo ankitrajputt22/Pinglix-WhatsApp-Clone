@@ -12,11 +12,14 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
 
+import in.pinglix.user.AccountStatus;
 import in.pinglix.user.User;
 import in.pinglix.user.UserRepository;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -72,7 +75,15 @@ class AuthIntegrationTest {
         assertThat(refreshTokenRepository.count()).isEqualTo(1);
         assertThat(registration.getResponse().getHeaders(HttpHeaders.SET_COOKIE))
                 .hasSize(2)
-                .allMatch(value -> value.contains("SameSite=Lax"));
+                .allMatch(value -> value.contains("SameSite=Lax"))
+                .allMatch(value -> value.contains("Path=/"))
+                .noneMatch(value -> value.contains("Secure"));
+
+        Cookie refreshCookie = cookie(registration, "pinglix_refresh");
+        assertThat(refreshTokenRepository.findByTokenHash(refreshCookie.getValue()))
+                .isEmpty();
+        assertThat(refreshTokenRepository.findByTokenHash(hash(refreshCookie.getValue())))
+                .isPresent();
     }
 
     @Test
@@ -121,10 +132,15 @@ class AuthIntegrationTest {
     void logsInWithCorrectCredentials() throws Exception {
         createUser();
 
-        mockMvc.perform(loginRequest(PASSWORD))
+        MvcResult login = mockMvc.perform(loginRequest(PASSWORD))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(EMAIL))
-                .andExpect(header().exists(HttpHeaders.SET_COOKIE));
+                .andExpect(header().exists(HttpHeaders.SET_COOKIE))
+                .andReturn();
+
+        assertThat(login.getResponse().getHeaders(HttpHeaders.SET_COOKIE))
+                .hasSize(2)
+                .allMatch(value -> value.contains("HttpOnly"));
     }
 
     @Test
@@ -132,6 +148,22 @@ class AuthIntegrationTest {
         createUser();
 
         mockMvc.perform(loginRequest("WrongPassword123!"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"))
+                .andExpect(jsonPath("$.message").value("Invalid email or password"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = AccountStatus.class,
+            names = {"LOCKED", "DISABLED", "DELETED"}
+    )
+    void rejectsLoginForNonActiveAccounts(AccountStatus accountStatus) throws Exception {
+        User user = createUser();
+        user.changeAccountStatus(accountStatus);
+        userRepository.save(user);
+
+        mockMvc.perform(loginRequest(PASSWORD))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"))
                 .andExpect(jsonPath("$.message").value("Invalid email or password"));
@@ -147,7 +179,8 @@ class AuthIntegrationTest {
                         .cookie(cookie(registration, "pinglix_access")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(EMAIL))
-                .andExpect(jsonPath("$.passwordHash").doesNotExist());
+                .andExpect(jsonPath("$.passwordHash").doesNotExist())
+                .andExpect(jsonPath("$.tokenHash").doesNotExist());
     }
 
     @Test
@@ -155,6 +188,14 @@ class AuthIntegrationTest {
         mockMvc.perform(get("/api/v1/auth/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    void rejectsLogoutWithoutAuthentication() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("AUTHENTICATION_REQUIRED"))
+                .andExpect(jsonPath("$.message").value("Authentication is required"));
     }
 
     @Test
@@ -194,12 +235,16 @@ class AuthIntegrationTest {
 
         Cookie replacementRefresh = cookie(refreshed, "pinglix_refresh");
         assertThat(replacementRefresh.getValue()).isNotEqualTo(originalRefresh.getValue());
-        assertThat(refreshTokenRepository.findByTokenHash(hash(originalRefresh.getValue())))
-                .get()
-                .extracting(RefreshToken::getRevokedAt)
-                .isNotNull();
-        assertThat(refreshTokenRepository.findByTokenHash(hash(replacementRefresh.getValue())))
-                .isPresent();
+        RefreshToken originalStored = refreshTokenRepository
+                .findByTokenHash(hash(originalRefresh.getValue()))
+                .orElseThrow();
+        RefreshToken replacementStored = refreshTokenRepository
+                .findByTokenHash(hash(replacementRefresh.getValue()))
+                .orElseThrow();
+        assertThat(originalStored.getRevokedAt()).isNotNull();
+        assertThat(originalStored.getReplacedByToken()).isNotNull();
+        assertThat(originalStored.getReplacedByToken().getId())
+                .isEqualTo(replacementStored.getId());
     }
 
     @Test
@@ -215,6 +260,26 @@ class AuthIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/refresh").cookie(originalRefresh))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    void missingRefreshTokenIsRejectedAndClearsCookies() throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/refresh"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("AUTHENTICATION_REQUIRED"))
+                .andReturn();
+
+        assertThat(result.getResponse().getHeaders(HttpHeaders.SET_COOKIE))
+                .hasSize(2)
+                .allMatch(value -> value.contains("Max-Age=0"));
+    }
+
+    @Test
+    void healthEndpointRemainsPublicWithSecurityEnabled() throws Exception {
+        mockMvc.perform(get("/api/v1/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.app").value("Pinglix"));
     }
 
     @Test
@@ -253,8 +318,8 @@ class AuthIntegrationTest {
                         """.formatted(EMAIL, password));
     }
 
-    private void createUser() {
-        userRepository.save(new User(
+    private User createUser() {
+        return userRepository.save(new User(
                 EMAIL,
                 passwordEncoder.encode(PASSWORD),
                 "Ankit"

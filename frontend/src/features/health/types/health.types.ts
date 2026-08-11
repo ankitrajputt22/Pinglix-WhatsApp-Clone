@@ -1,6 +1,7 @@
-export interface HealthResponse {
+export type HealthResponse = {
   status: string;
-  application: string;
+  app?: string;
+  application?: string;
   message?: string;
   timestamp?: string;
-}
+};

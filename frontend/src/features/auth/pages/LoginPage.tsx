@@ -4,9 +4,9 @@ import { LoginForm } from "../components/LoginForm";
 export function LoginPage() {
   return (
     <AuthLayout
-      eyebrow="Welcome back"
+      eyebrow="Secure sign in"
       title="Log in to Pinglix"
-      description="Use your account to continue to the protected Pinglix application."
+      description="Welcome back. Continue to your private conversations."
     >
       <LoginForm />
     </AuthLayout>

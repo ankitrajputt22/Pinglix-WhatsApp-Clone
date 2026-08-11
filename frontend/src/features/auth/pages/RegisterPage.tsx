@@ -4,9 +4,9 @@ import { RegisterForm } from "../components/RegisterForm";
 export function RegisterPage() {
   return (
     <AuthLayout
-      eyebrow="Join Pinglix"
+      eyebrow="Create your space"
       title="Create your account"
-      description="Set up your secure Pinglix account to begin the journey."
+      description="Real-time conversations, instantly connected."
     >
       <RegisterForm />
     </AuthLayout>
