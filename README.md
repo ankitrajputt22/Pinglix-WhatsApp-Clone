@@ -164,6 +164,9 @@ with review and presentation:
 - [Release notes](docs/release-notes.md)
 - [Portfolio summary](docs/portfolio-summary.md)
 - [Future roadmap](docs/roadmap.md)
+- [Final QA checklist](docs/final-qa.md)
+- [Release checklist](docs/release-checklist.md)
+- [Merge readiness](docs/merge-readiness.md)
 
 ## Development Phases
 
@@ -181,6 +184,7 @@ with review and presentation:
 - Phase 11: MVP stabilization, QA, and documentation
 - Phase 12: Deployment foundation and release preparation
 - Phase 13: Final MVP release and portfolio preparation
+- Phase 14: Final MVP hardening and merge readiness
 
 Each phase should be completed and tested before the next one starts.
 
@@ -200,6 +204,9 @@ attachments, calls, reactions, or message editing.
 
 Phase 11 checks the existing MVP, improves test isolation, and records setup,
 security, testing, and feature-status notes. It does not add product features.
+
+Phase 14 performs the final regression, security, documentation, and merge
+readiness review. It does not add a new product feature.
 
 ## Health Check
 
