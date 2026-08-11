@@ -100,6 +100,17 @@ export class StompClientManager {
     return () => subscription.unsubscribe();
   }
 
+  publish(destination: string, body: unknown = {}) {
+    if (!this.client?.connected) {
+      return false;
+    }
+    this.client.publish({
+      destination,
+      body: JSON.stringify(body)
+    });
+    return true;
+  }
+
   private updateStatus(nextStatus: RealtimeConnectionStatus) {
     if (this.status === nextStatus) {
       return;

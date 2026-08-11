@@ -22,7 +22,9 @@ function isConversationParticipant(
     typeof participant.email === "string" &&
     typeof participant.displayName === "string" &&
     isNullableString(participant.profileImageUrl) &&
-    isNullableString(participant.about)
+    isNullableString(participant.about) &&
+    (participant.lastSeenAt === undefined ||
+      isNullableString(participant.lastSeenAt))
   );
 }
 

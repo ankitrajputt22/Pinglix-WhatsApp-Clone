@@ -3,6 +3,7 @@ package in.pinglix.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -67,6 +68,57 @@ class UserIntegrationTest {
         mockMvc.perform(get("/api/v1/users/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    void authenticatedUserCanUpdateOwnProfile() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+
+        mockMvc.perform(patch("/api/v1/users/me")
+                        .cookie(accessCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "displayName": "Ankit Updated",
+                                  "about": "Building Pinglix",
+                                  "profileImageUrl": "https://example.com/avatar.png"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.displayName").value("Ankit Updated"))
+                .andExpect(jsonPath("$.about").value("Building Pinglix"))
+                .andExpect(jsonPath("$.profileImageUrl")
+                        .value("https://example.com/avatar.png"))
+                .andExpect(jsonPath("$.email").value("ankit@example.com"))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist());
+    }
+
+    @Test
+    void rejectsProfileUpdateWithoutAuthentication() throws Exception {
+        mockMvc.perform(patch("/api/v1/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"Someone\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error")
+                        .value("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    void rejectsInvalidProfileInput() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+
+        mockMvc.perform(patch("/api/v1/users/me")
+                        .cookie(accessCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "displayName": "A",
+                                  "about": "About",
+                                  "profileImageUrl": "not-a-url"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"));
     }
 
     @Test

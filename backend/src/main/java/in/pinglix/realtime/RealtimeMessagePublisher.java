@@ -73,6 +73,40 @@ public class RealtimeMessagePublisher {
         publishAfterCommit(conversationId, event);
     }
 
+    public void publishTypingStarted(Long conversationId, Long userId) {
+        publishNow(conversationId, new TypingEvent(
+                RealtimeEventType.TYPING_STARTED,
+                conversationId,
+                userId
+        ));
+    }
+
+    public void publishTypingStopped(Long conversationId, Long userId) {
+        publishNow(conversationId, new TypingEvent(
+                RealtimeEventType.TYPING_STOPPED,
+                conversationId,
+                userId
+        ));
+    }
+
+    public void publishPresence(
+            RealtimeEventType type,
+            Long conversationId,
+            Long userId,
+            Instant lastSeenAt
+    ) {
+        publishNow(conversationId, new PresenceEvent(
+                type,
+                conversationId,
+                userId,
+                lastSeenAt
+        ));
+    }
+
+    private void publishNow(Long conversationId, Object event) {
+        messagingTemplate.convertAndSend(destination(conversationId), event);
+    }
+
     private void publishAfterCommit(Long conversationId, Object event) {
         Runnable publish = () -> messagingTemplate.convertAndSend(
                 destination(conversationId),

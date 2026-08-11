@@ -93,6 +93,45 @@ describe("user module", () => {
     ).toBeInTheDocument();
   });
 
+  it("edits and saves the current user profile", async () => {
+    const user = userEvent.setup();
+    mockAuthenticatedProfile(jsonResponse(userProfile));
+    vi.mocked(fetch).mockResolvedValueOnce(
+      jsonResponse({
+        ...userProfile,
+        displayName: "Ankit Rajput",
+        about: "Building Pinglix"
+      })
+    );
+    renderApp();
+    await waitForApp();
+
+    await user.click(screen.getByRole("button", { name: "Edit Profile" }));
+    expect(screen.getByRole("form", { name: "Edit profile" })).toBeInTheDocument();
+    await user.clear(screen.getByLabelText("Display name"));
+    await user.type(screen.getByLabelText("Display name"), "Ankit Rajput");
+    await user.clear(screen.getByLabelText("About"));
+    await user.type(screen.getByLabelText("About"), "Building Pinglix");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    const profile = screen.getByRole("region", {
+      name: "Current user profile"
+    });
+    expect(within(profile).getByText("Ankit Rajput")).toBeInTheDocument();
+    expect(fetch).toHaveBeenLastCalledWith(
+      "http://localhost:8081/api/v1/users/me",
+      expect.objectContaining({
+        credentials: "include",
+        method: "PATCH",
+        body: JSON.stringify({
+          displayName: "Ankit Rajput",
+          about: "Building Pinglix",
+          profileImageUrl: ""
+        })
+      })
+    );
+  });
+
   it("moves focus to user search from New chat", async () => {
     const user = userEvent.setup();
     mockAuthenticatedProfile(jsonResponse(userProfile));

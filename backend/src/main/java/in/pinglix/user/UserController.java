@@ -5,6 +5,10 @@ import java.util.List;
 import in.pinglix.security.CustomUserDetails;
 import in.pinglix.user.dto.CurrentUserResponse;
 import in.pinglix.user.dto.UserResponse;
+import in.pinglix.user.dto.UpdateProfileRequest;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +31,14 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
         return userService.getCurrentUser(principal);
+    }
+
+    @PatchMapping("/me")
+    public CurrentUserResponse updateProfile(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        return userService.updateProfile(principal, request);
     }
 
     @GetMapping("/search")

@@ -5,8 +5,10 @@ import java.util.List;
 import in.pinglix.auth.exception.AuthenticationRequiredException;
 import in.pinglix.security.CustomUserDetails;
 import in.pinglix.user.dto.CurrentUserResponse;
+import in.pinglix.user.dto.UpdateProfileRequest;
 import in.pinglix.user.dto.UserResponse;
 import in.pinglix.user.exception.InvalidUserSearchException;
+import in.pinglix.user.exception.InvalidProfileRequestException;
 import in.pinglix.user.exception.UserNotFoundException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,27 @@ public class UserService {
     public CurrentUserResponse getCurrentUser(CustomUserDetails principal) {
         Long currentUserId = requireUserId(principal);
         User user = findAvailableUser(currentUserId);
+        return UserMapper.toCurrentUserResponse(user);
+    }
+
+    @Transactional
+    public CurrentUserResponse updateProfile(
+            CustomUserDetails principal,
+            UpdateProfileRequest request
+    ) {
+        Long currentUserId = requireUserId(principal);
+        User user = findAvailableUser(currentUserId);
+        String displayName = request.displayName().trim();
+        if (displayName.length() < 2) {
+            throw new InvalidProfileRequestException(
+                    "Display name must be 2 to 50 characters"
+            );
+        }
+        user.updateProfile(
+                displayName,
+                normalizeOptional(request.about()),
+                normalizeProfileImageUrl(request.profileImageUrl())
+        );
         return UserMapper.toCurrentUserResponse(user);
     }
 
@@ -88,5 +111,26 @@ public class UserService {
                 .replace("!", "!!")
                 .replace("%", "!%")
                 .replace("_", "!_");
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private String normalizeProfileImageUrl(String value) {
+        String normalized = normalizeOptional(value);
+        if (normalized == null) {
+            return null;
+        }
+        if (!normalized.matches("https?://\\S+")) {
+            throw new InvalidProfileRequestException(
+                    "Profile image URL must be a valid URL"
+            );
+        }
+        return normalized;
     }
 }

@@ -88,15 +88,44 @@ transaction commits. They contain only IDs and timestamps:
 `MESSAGE_READ` has the same shape with `readAt`. The frontend updates its
 message cache when either event arrives.
 
+## Phase 10 Events
+
+Typing events are sent to the selected conversation only:
+
+```text
+/app/conversations/{conversationId}/typing.start
+/app/conversations/{conversationId}/typing.stop
+```
+
+The server publishes these event shapes to the conversation topic:
+
+```json
+{
+  "type": "TYPING_STARTED",
+  "conversationId": 10,
+  "userId": 2
+}
+```
+
+```json
+{
+  "type": "USER_OFFLINE",
+  "conversationId": 10,
+  "userId": 2,
+  "lastSeenAt": "2026-08-12T00:30:00Z"
+}
+```
+
+`USER_ONLINE` has the same shape with a null `lastSeenAt`. Presence is held in
+memory for the running backend. `lastSeenAt` is saved on disconnect and logout.
+Typing events are temporary and are never saved in MySQL.
+
 ## Later Events
 
 These events can be added later:
 
 - `MESSAGE_DELETED`
 - `MESSAGE_UPDATED`
-- `TYPING_STARTED`
-- `TYPING_STOPPED`
-- `USER_ONLINE`
-- `USER_OFFLINE`
 
-Typing, read receipts, delivery receipts, and presence are not part of Phase 7.
+Attachments, calls, groups, reactions, and other advanced events are not part
+of the current implementation.

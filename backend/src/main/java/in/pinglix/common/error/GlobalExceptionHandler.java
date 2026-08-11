@@ -12,6 +12,7 @@ import in.pinglix.message.exception.InvalidMessageRequestException;
 import in.pinglix.message.exception.MessageNotFoundException;
 import in.pinglix.message.exception.MessageSendFailedException;
 import in.pinglix.user.exception.InvalidUserSearchException;
+import in.pinglix.user.exception.InvalidProfileRequestException;
 import in.pinglix.user.exception.UserNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -111,6 +112,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidUserSearchException.class)
     public ResponseEntity<ApiErrorResponse> handleInvalidUserSearch(
             InvalidUserSearchException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_ERROR",
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InvalidProfileRequestException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidProfileRequest(
+            InvalidProfileRequestException exception,
             HttpServletRequest request
     ) {
         return error(

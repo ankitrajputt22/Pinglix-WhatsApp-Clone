@@ -12,14 +12,17 @@ export type RealtimeConnectionStatus =
 export type RealtimeEventType =
   | "MESSAGE_CREATED"
   | "MESSAGE_DELIVERED"
-  | "MESSAGE_READ";
+  | "MESSAGE_READ"
+  | "TYPING_STARTED"
+  | "TYPING_STOPPED"
+  | "USER_ONLINE"
+  | "USER_OFFLINE";
 
 export type MessageCreatedEvent = {
   type: "MESSAGE_CREATED";
   conversationId: number;
   message: MessageResponse;
 };
-
 export type MessageDeliveredEvent = {
   type: "MESSAGE_DELIVERED";
   conversationId: number;
@@ -27,7 +30,6 @@ export type MessageDeliveredEvent = {
   userId: number;
   deliveredAt: string;
 };
-
 export type MessageReadEvent = {
   type: "MESSAGE_READ";
   conversationId: number;
@@ -35,60 +37,77 @@ export type MessageReadEvent = {
   userId: number;
   readAt: string;
 };
-
+export type TypingEvent = {
+  type: "TYPING_STARTED" | "TYPING_STOPPED";
+  conversationId: number;
+  userId: number;
+};
+export type PresenceEvent = {
+  type: "USER_ONLINE" | "USER_OFFLINE";
+  conversationId: number;
+  userId: number;
+  lastSeenAt: string | null;
+};
 export type RealtimeEvent =
   | MessageCreatedEvent
   | MessageDeliveredEvent
-  | MessageReadEvent;
+  | MessageReadEvent
+  | TypingEvent
+  | PresenceEvent;
 
 export function parseMessageCreatedEvent(
   value: unknown
 ): MessageCreatedEvent | null {
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-
+  if (typeof value !== "object" || value === null) return null;
   const event = value as Record<string, unknown>;
   if (
     event.type !== "MESSAGE_CREATED" ||
     typeof event.conversationId !== "number" ||
     !isMessageResponse(event.message)
-  ) {
-    return null;
-  }
-
+  ) return null;
   const message = event.message;
-  if (message.conversationId !== event.conversationId) {
-    return null;
-  }
-
-  return {
-    type: "MESSAGE_CREATED",
-    conversationId: event.conversationId,
-    message
-  };
+  return message.conversationId === event.conversationId
+    ? { type: "MESSAGE_CREATED", conversationId: event.conversationId, message }
+    : null;
 }
 
 export function parseRealtimeEvent(value: unknown): RealtimeEvent | null {
-  const created = parseMessageCreatedEvent(value);
-  if (created) {
-    return created;
-  }
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-
+  if (typeof value !== "object" || value === null) return null;
   const event = value as Record<string, unknown>;
+  const created = parseMessageCreatedEvent(value);
+  if (created) return created;
+
+  if (
+    (event.type === "TYPING_STARTED" || event.type === "TYPING_STOPPED") &&
+    typeof event.conversationId === "number" &&
+    typeof event.userId === "number"
+  ) {
+    return {
+      type: event.type,
+      conversationId: event.conversationId,
+      userId: event.userId
+    };
+  }
+  if (
+    (event.type === "USER_ONLINE" || event.type === "USER_OFFLINE") &&
+    typeof event.conversationId === "number" &&
+    typeof event.userId === "number" &&
+    (event.lastSeenAt === null || typeof event.lastSeenAt === "string")
+  ) {
+    return {
+      type: event.type,
+      conversationId: event.conversationId,
+      userId: event.userId,
+      lastSeenAt: event.lastSeenAt
+    };
+  }
   if (
     typeof event.conversationId !== "number" ||
     !Array.isArray(event.messageIds) ||
     event.messageIds.length === 0 ||
     !event.messageIds.every((id) => typeof id === "number") ||
     typeof event.userId !== "number"
-  ) {
-    return null;
-  }
-
+  ) return null;
   if (
     event.type === "MESSAGE_DELIVERED" &&
     typeof event.deliveredAt === "string"

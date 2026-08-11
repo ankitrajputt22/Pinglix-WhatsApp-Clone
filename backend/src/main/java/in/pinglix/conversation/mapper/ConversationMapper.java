@@ -24,7 +24,8 @@ public final class ConversationMapper {
                         otherParticipant.getDisplayName(),
                         otherParticipant.getEmail(),
                         otherParticipant.getProfileImageUrl(),
-                        otherParticipant.getAbout()
+                        otherParticipant.getAbout(),
+                        otherParticipant.getLastSeenAt()
                 ),
                 conversation.getLastMessageAt(),
                 conversation.getCreatedAt(),
