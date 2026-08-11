@@ -154,6 +154,17 @@ docker compose -f docker-compose.prod.example.yml config
 Use an ignored `infrastructure/.env` file with real deployment values before
 starting that example. Never commit passwords, JWT secrets, or cloud keys.
 
+## Release and Demo Notes
+
+This repository contains the Pinglix MVP release. The following documents help
+with review and presentation:
+
+- [MVP status](docs/mvp-status.md)
+- [Demo walkthrough](docs/demo-walkthrough.md)
+- [Release notes](docs/release-notes.md)
+- [Portfolio summary](docs/portfolio-summary.md)
+- [Future roadmap](docs/roadmap.md)
+
 ## Development Phases
 
 - Phase 0: Repository setup
@@ -169,6 +180,7 @@ starting that example. Never commit passwords, JWT secrets, or cloud keys.
 - Phase 10: Advanced messaging foundation
 - Phase 11: MVP stabilization, QA, and documentation
 - Phase 12: Deployment foundation and release preparation
+- Phase 13: Final MVP release and portfolio preparation
 
 Each phase should be completed and tested before the next one starts.
 
@@ -208,5 +220,5 @@ http://localhost:8081/api/v1/health
 
 ## Future Improvements
 
-Later versions may add groups, attachments, notifications, and better
-production deployment support.
+Possible future work is listed in [docs/roadmap.md](docs/roadmap.md). These
+items are not part of the current MVP.

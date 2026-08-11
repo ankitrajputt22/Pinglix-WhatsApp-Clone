@@ -17,6 +17,7 @@
 - Saved last-seen timestamps
 - Responsive Pinglix messaging interface
 - Automated backend and frontend tests
+- Deployment foundation with Dockerfiles, nginx SPA fallback, and release notes
 
 ## Not implemented
 
@@ -37,3 +38,15 @@ Phase 11 stabilizes the existing MVP. It improves test database isolation,
 checks the build and security boundaries, adds safe environment examples, and
 documents setup, testing, security, and current product limits. It does not add
 a new product feature.
+
+## Phase 12 result
+
+Phase 12 adds a production-style Docker build, an nginx frontend image, an
+example Compose deployment, environment guidance, and deployment notes. It
+does not add a new product feature or claim production-scale operation.
+
+## Phase 13 result
+
+Phase 13 prepares the MVP for portfolio review. It adds a repeatable demo
+walkthrough, release notes, a portfolio summary, and a clear future roadmap.
+It does not add a new product feature.
