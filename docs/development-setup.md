@@ -101,6 +101,12 @@ curl http://localhost:8081/api/v1/health
 curl http://localhost:8081/actuator/health
 ```
 
+Build the backend without starting it:
+
+```bash
+./mvnw clean package
+```
+
 ## Start the Frontend
 
 Open another terminal:
@@ -134,6 +140,7 @@ Backend:
 ```bash
 cd backend
 ./mvnw test
+./mvnw clean package
 ```
 
 Frontend:
@@ -143,6 +150,9 @@ cd frontend
 npm test
 npm run build
 ```
+
+The backend test profile uses an isolated H2 database for each Spring test
+context. It does not change the local MySQL database.
 
 ## Configuration
 
@@ -167,5 +177,9 @@ Useful local environment variables include:
 - `PINGLIX_CORS_ALLOWED_ORIGINS`
 - `VITE_API_BASE_URL`
 - `VITE_WS_URL`
+
+Safe examples are available in `backend/.env.example`, `frontend/.env.example`,
+and `infrastructure/.env.example`. Copy values into local environment files only
+when needed. Never commit `.env` files or real production secrets.
 
 Production secrets must come from environment variables.

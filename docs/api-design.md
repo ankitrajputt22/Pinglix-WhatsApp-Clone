@@ -8,9 +8,9 @@ All main REST endpoints use:
 /api/v1
 ```
 
-## Phase 1 Scope
+## Current MVP Scope
 
-Only this Pinglix API route belongs to the Phase 1 implementation:
+The health route is public:
 
 ```http
 GET /api/v1/health
@@ -18,7 +18,8 @@ GET /api/v1/health
 
 It is public and does not need authentication.
 
-All routes below are planned for later phases. On the current Phase 5 branch, some of them already exist because later work is being kept.
+The authentication, user, conversation, message, and receipt routes below are
+implemented. Unsupported future routes are not part of the current MVP.
 
 ## Authentication
 
@@ -99,8 +100,8 @@ Conversation members can subscribe to:
 /topic/conversations/{conversationId}
 ```
 
-There is no WebSocket send destination. REST remains the only message send
-path.
+Message creation remains a REST operation. WebSocket send destinations are used
+only for the temporary typing events described in the Phase 10 section.
 
 ### Message Status (Phase 9)
 
@@ -124,6 +125,9 @@ events are sent only for the selected conversation and are not stored.
 
 The current user is identified from the authenticated session. A user must be
 an active conversation member before sending typing events.
+
+No password hash, token, cookie, or internal security field is returned by the
+MVP API.
 
 ## Error Response
 

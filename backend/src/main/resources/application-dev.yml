@@ -4,9 +4,9 @@ spring:
       on-profile: dev
 
   datasource:
-    url: ${PINGLIX_DB_URL:jdbc:mysql://localhost:3306/pinglix?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${PINGLIX_DB_USERNAME:pinglix}
-    password: ${PINGLIX_DB_PASSWORD:pinglix_dev_password}
+    url: ${SPRING_DATASOURCE_URL:${PINGLIX_DB_URL:jdbc:mysql://localhost:3306/pinglix?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true}}
+    username: ${SPRING_DATASOURCE_USERNAME:${PINGLIX_DB_USERNAME:pinglix}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${PINGLIX_DB_PASSWORD:pinglix_dev_password}}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -24,5 +24,5 @@ pinglix:
     refresh-token-ttl: ${PINGLIX_REFRESH_TOKEN_TTL:30d}
     access-cookie-name: pinglix_access
     refresh-cookie-name: pinglix_refresh
-    secure-cookie: false
+    secure-cookie: ${PINGLIX_COOKIE_SECURE:false}
     same-site: Lax
