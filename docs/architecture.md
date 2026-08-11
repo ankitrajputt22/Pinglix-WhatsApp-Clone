@@ -152,9 +152,15 @@ The project follows this order:
 - Phase 8: UI improvements
 - Phase 9: Message status
 - Phase 10: Advanced features
+- Phase 11: MVP stabilization, QA, and documentation
+- Phase 12: Deployment foundation
+- Phase 13: Final MVP release and portfolio preparation
+- Phase 14: Final hardening and merge readiness
 
 Each phase should be completed and tested before the next phase starts.
 
 ## Later Production Work
 
-Production deployment is not part of the current work. Later work may include HTTPS, environment variables, secure cookies, logs, health checks, CI/CD, and basic monitoring.
+The project has deployment foundations and local production-style examples, but
+it is not deployed to a production service. Later work may include HTTPS,
+managed secrets, backups, CI/CD, and basic monitoring.

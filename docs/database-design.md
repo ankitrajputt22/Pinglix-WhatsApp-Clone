@@ -18,7 +18,8 @@ Tables must not be created by hand. Every schema change must use Flyway.
 ## Current MVP Scope
 
 The current MVP uses the authentication, conversation, message, and receipt
-migrations listed below. No Phase 11 schema migration was needed.
+migrations listed below. No Phase 11, 12, 13, or 14 schema migration was
+needed.
 
 ## Users
 
@@ -126,4 +127,4 @@ Attachments can be added later. MySQL should store file details only. The real f
 
 Attachments will use a later migration.
 
-Phase 11 does not add attachments or any other unsupported table.
+Phases 11 through 14 do not add attachments or any other unsupported table.
