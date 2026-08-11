@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -55,7 +55,8 @@ function renderApp() {
 function mockAuthenticatedProfile(profileResponse: Response) {
   vi.mocked(fetch)
     .mockResolvedValueOnce(jsonResponse(authUser))
-    .mockResolvedValueOnce(profileResponse);
+    .mockResolvedValueOnce(profileResponse)
+    .mockResolvedValueOnce(jsonResponse([]));
 }
 
 async function waitForApp() {
@@ -80,19 +81,34 @@ describe("user module", () => {
     expect(
       await screen.findByRole("heading", { name: "Current user profile" })
     ).toBeInTheDocument();
-    expect(screen.getByText("ankit@example.com")).toBeInTheDocument();
+    const profile = screen.getByRole("region", {
+      name: "Current user profile"
+    });
+    expect(within(profile).getByText("ankit@example.com")).toBeInTheDocument();
     expect(
-      screen.getByText("Hey there! I am using Pinglix.")
+      within(profile).getByText("Hey there! I am using Pinglix.")
     ).toBeInTheDocument();
     expect(
       screen.getByText("Search for users to start connecting on Pinglix.")
     ).toBeInTheDocument();
   });
 
+  it("moves focus to user search from New chat", async () => {
+    const user = userEvent.setup();
+    mockAuthenticatedProfile(jsonResponse(userProfile));
+    renderApp();
+    await waitForApp();
+
+    await user.click(screen.getByRole("button", { name: "New chat" }));
+
+    expect(screen.getByLabelText("Search users")).toHaveFocus();
+  });
+
   it("shows a loading state while the profile is loading", async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(jsonResponse(authUser))
-      .mockImplementationOnce(() => new Promise(() => undefined));
+      .mockImplementationOnce(() => new Promise(() => undefined))
+      .mockResolvedValueOnce(jsonResponse([]));
     renderApp();
 
     await waitForApp();
@@ -111,7 +127,7 @@ describe("user module", () => {
       await screen.findByText("Unable to load your profile")
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Unable to load users. Please try again.")
+      screen.getByText("Unable to load your profile. Please try again.")
     ).toBeInTheDocument();
   });
 
@@ -127,7 +143,7 @@ describe("user module", () => {
       await screen.findByText("Enter at least 2 characters to search")
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Search" })).toBeDisabled();
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
 
   it("renders matching user search results", async () => {
@@ -145,6 +161,53 @@ describe("user module", () => {
     expect(screen.getByText("Available on Pinglix")).toBeInTheDocument();
   });
 
+  it("trims the search query before sending it", async () => {
+    const user = userEvent.setup();
+    mockAuthenticatedProfile(jsonResponse(userProfile));
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([searchResult]));
+    renderApp();
+    await waitForApp();
+
+    await user.type(screen.getByLabelText("Search users"), "  ank  ");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+    await screen.findByText("Ankush");
+
+    expect(fetch).toHaveBeenLastCalledWith(
+      "http://localhost:8081/api/v1/users/search?query=ank",
+      expect.objectContaining({
+        credentials: "include",
+        method: "GET"
+      })
+    );
+  });
+
+  it("shows a search loading state", async () => {
+    const user = userEvent.setup();
+    mockAuthenticatedProfile(jsonResponse(userProfile));
+    vi.mocked(fetch).mockImplementationOnce(() => new Promise(() => undefined));
+    renderApp();
+    await waitForApp();
+
+    await user.type(screen.getByLabelText("Search users"), "ank");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Searching..." })
+    ).toBeDisabled();
+  });
+
+  it("prevents search input longer than 100 characters", async () => {
+    const user = userEvent.setup();
+    mockAuthenticatedProfile(jsonResponse(userProfile));
+    renderApp();
+    await waitForApp();
+
+    const input = screen.getByLabelText("Search users");
+    await user.type(input, "a".repeat(101));
+
+    expect(input).toHaveValue("a".repeat(100));
+  });
+
   it("shows the no-results empty state", async () => {
     const user = userEvent.setup();
     mockAuthenticatedProfile(jsonResponse(userProfile));
@@ -155,7 +218,7 @@ describe("user module", () => {
     await user.type(screen.getByLabelText("Search users"), "nobody");
     await user.click(screen.getByRole("button", { name: "Search" }));
 
-    expect(await screen.findByText("No users found")).toBeInTheDocument();
+    expect(await screen.findByText("No users found.")).toBeInTheDocument();
   });
 
   it("shows a friendly search error state", async () => {

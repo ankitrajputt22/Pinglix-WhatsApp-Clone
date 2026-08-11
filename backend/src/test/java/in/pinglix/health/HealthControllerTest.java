@@ -23,6 +23,7 @@ class HealthControllerTest {
         mockMvc.perform(get("/api/v1/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.app").value("Pinglix"))
                 .andExpect(jsonPath("$.application").value("Pinglix"))
                 .andExpect(jsonPath("$.message").value("Pinglix backend is running"))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());

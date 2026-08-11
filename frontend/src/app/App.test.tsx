@@ -83,6 +83,33 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("supports a health response that uses the app field", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({
+        status: "UP",
+        app: "Pinglix API",
+        message: "Pinglix backend is running"
+      })
+    );
+
+    render(<App />);
+
+    expect(
+      await screen.findByText("Backend connection successful")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Pinglix API")).toBeInTheDocument();
+  });
+
+  it("shows a clear error for a malformed health response", async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ app: "Pinglix" }));
+
+    render(<App />);
+
+    expect(
+      await screen.findByText("Unexpected backend response.")
+    ).toBeInTheDocument();
+  });
+
   it("checks the backend again when retry is selected", async () => {
     const user = userEvent.setup();
     vi.mocked(fetch)
@@ -100,5 +127,20 @@ describe("App", () => {
       await screen.findByText("Backend connection successful")
     ).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not show future authentication or chat screens on the health page", () => {
+    vi.mocked(fetch).mockImplementation(() => new Promise(() => undefined));
+
+    render(<App />);
+
+    expect(
+      screen.queryByRole("heading", { name: /log in/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /create.*account/i })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/recent conversations/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/send message/i)).not.toBeInTheDocument();
   });
 });

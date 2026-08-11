@@ -1,41 +1,53 @@
-import { apiClient } from "../../../lib/api-client";
+import { ApiClientError, apiClient } from "../../../lib/api-client";
 import type { HealthResponse } from "../types/health.types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export async function fetchHealth(signal?: AbortSignal): Promise<HealthResponse> {
+function unexpectedResponse(): never {
+  throw new ApiClientError("Unexpected backend response.", "RESPONSE");
+}
+
+export async function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
   const response = await apiClient.get<unknown>("/api/v1/health", signal);
 
   if (!isRecord(response)) {
-    throw new Error("Unexpected backend response.");
+    unexpectedResponse();
   }
 
   if (typeof response.status !== "string" || !response.status.trim()) {
-    throw new Error("Backend response is missing status.");
+    unexpectedResponse();
   }
 
   if (
-    typeof response.application !== "string" ||
-    !response.application.trim()
+    response.app !== undefined &&
+    typeof response.app !== "string"
   ) {
-    throw new Error("Backend response is missing application name.");
+    unexpectedResponse();
+  }
+
+  if (
+    response.application !== undefined &&
+    typeof response.application !== "string"
+  ) {
+    unexpectedResponse();
   }
 
   if (response.message !== undefined && typeof response.message !== "string") {
-    throw new Error("Unexpected backend response.");
+    unexpectedResponse();
   }
 
   if (
     response.timestamp !== undefined &&
     typeof response.timestamp !== "string"
   ) {
-    throw new Error("Unexpected backend response.");
+    unexpectedResponse();
   }
 
   return {
     status: response.status,
+    app: response.app,
     application: response.application,
     message: response.message,
     timestamp: response.timestamp

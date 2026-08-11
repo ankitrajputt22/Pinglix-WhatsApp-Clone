@@ -10,19 +10,14 @@ export function CurrentUserCard() {
   return (
     <section
       aria-labelledby="current-profile-title"
-      className="rounded-3xl border border-white/90 bg-white/90 p-6 shadow-card backdrop-blur sm:p-7"
+      className="border-b border-slate-200 bg-white px-5 py-4"
     >
-      <div className="mb-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-pinglix-700">
-          Your profile
-        </p>
-        <h2
-          id="current-profile-title"
-          className="mt-1 text-xl font-bold tracking-tight text-ink"
-        >
-          Current user profile
-        </h2>
-      </div>
+      <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
+        Your profile
+      </p>
+      <h2 id="current-profile-title" className="sr-only">
+        Current user profile
+      </h2>
 
       {isPending ? (
         <div role="status" className="flex items-center gap-3 text-muted">
@@ -38,7 +33,7 @@ export function CurrentUserCard() {
             Unable to load your profile
           </p>
           <p className="mt-1 text-sm text-rose-700">
-            Unable to load users. Please try again.
+            Unable to load your profile. Please try again.
           </p>
           <button
             type="button"
@@ -49,28 +44,28 @@ export function CurrentUserCard() {
           </button>
         </div>
       ) : (
-        <div className="flex items-start gap-4">
+        <div className="flex items-center gap-3">
           <UserAvatar
             displayName={profile.displayName}
             profileImageUrl={profile.profileImageUrl}
-            size="large"
+            size="medium"
           />
           <dl className="min-w-0 flex-1">
             <div>
               <dt className="sr-only">Display name</dt>
-              <dd className="truncate text-lg font-bold text-ink">
+              <dd className="truncate text-sm font-semibold text-ink">
                 {profile.displayName}
               </dd>
             </div>
             <div>
               <dt className="sr-only">Email</dt>
-              <dd className="mt-0.5 break-all text-sm text-muted">
+              <dd className="mt-0.5 truncate text-xs text-muted">
                 {profile.email}
               </dd>
             </div>
             <div>
               <dt className="sr-only">About</dt>
-              <dd className="mt-3 text-sm leading-6 text-ink/80">
+              <dd className="mt-1 truncate text-xs leading-5 text-ink/70">
                 {profile.about || defaultAbout}
               </dd>
             </div>

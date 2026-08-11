@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    color: #17352d;
-    background: #f4fbf8;
+    color: #191c1e;
+    background: #f7f9fb;
     font-family:
       Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
       "Segoe UI", sans-serif;
@@ -23,6 +23,11 @@
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
+    background:
+      radial-gradient(circle at 8% 12%, rgb(114 213 200 / 0.14), transparent 28rem),
+      radial-gradient(circle at 92% 86%, rgb(213 227 252 / 0.34), transparent 34rem),
+      #f7f9fb;
+    overflow-x: hidden;
   }
 
   button,
@@ -30,5 +35,41 @@
   textarea,
   select {
     font: inherit;
+  }
+
+  ::selection {
+    color: #003d38;
+    background: #a9e9de;
+  }
+
+  :focus-visible {
+    scroll-margin: 1rem;
+  }
+}
+
+@layer utilities {
+  .pinglix-grid {
+    background-image:
+      linear-gradient(rgb(0 104 95 / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(0 104 95 / 0.035) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .pinglix-message-surface {
+    background-color: #f5f9f8;
+    background-image:
+      radial-gradient(circle at 12% 20%, rgb(114 213 200 / 0.08), transparent 18rem),
+      radial-gradient(circle at 88% 76%, rgb(191 219 254 / 0.16), transparent 22rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

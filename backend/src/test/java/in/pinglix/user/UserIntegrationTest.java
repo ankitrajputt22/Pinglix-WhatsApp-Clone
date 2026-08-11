@@ -8,11 +8,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import in.pinglix.auth.RefreshTokenRepository;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,12 +55,27 @@ class UserIntegrationTest {
                 .andExpect(jsonPath("$.displayName").value("Ankit"))
                 .andExpect(jsonPath("$.about")
                         .value("Hey there! I am using Pinglix."))
-                .andExpect(jsonPath("$.accountStatus").value("ACTIVE"));
+                .andExpect(jsonPath("$.accountStatus").value("ACTIVE"))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist())
+                .andExpect(jsonPath("$.lockedUntil").doesNotExist())
+                .andExpect(jsonPath("$.deletedAt").doesNotExist())
+                .andExpect(jsonPath("$.tokenHash").doesNotExist());
     }
 
     @Test
     void rejectsCurrentUserProfileWithoutAuthentication() throws Exception {
         mockMvc.perform(get("/api/v1/users/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    void rejectsOtherUserEndpointsWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/api/v1/users/search").param("query", "ank"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("AUTHENTICATION_REQUIRED"));
+
+        mockMvc.perform(get("/api/v1/users/{id}", 1))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("AUTHENTICATION_REQUIRED"));
     }
@@ -90,6 +108,32 @@ class UserIntegrationTest {
                 .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message")
                         .value("Search query must be at least 2 characters"));
+    }
+
+    @Test
+    void rejectsSearchQueryLongerThanOneHundredCharacters() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+
+        mockMvc.perform(get("/api/v1/users/search")
+                        .param("query", "a".repeat(101))
+                        .cookie(accessCookie))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message")
+                        .value("Search query must be at most 100 characters"));
+    }
+
+    @Test
+    void trimsSearchQueryBeforeMatching() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+        User target = saveUser("trimmed@example.com", "Trimmed Match");
+
+        mockMvc.perform(get("/api/v1/users/search")
+                        .param("query", "  trimmed  ")
+                        .cookie(accessCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(target.getId()));
     }
 
     @Test
@@ -134,6 +178,21 @@ class UserIntegrationTest {
     }
 
     @Test
+    void limitsSearchResultsToTwentyUsers() throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+        IntStream.range(0, 25).forEach(index -> saveUser(
+                "person%02d@example.com".formatted(index),
+                "Person %02d".formatted(index)
+        ));
+
+        mockMvc.perform(get("/api/v1/users/search")
+                        .param("query", "person")
+                        .cookie(accessCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(20));
+    }
+
+    @Test
     void returnsSafePublicUserById() throws Exception {
         Cookie accessCookie = registerCurrentUser();
         User target = saveUser("ankush@example.com", "Ankush");
@@ -151,6 +210,29 @@ class UserIntegrationTest {
         Cookie accessCookie = registerCurrentUser();
 
         mockMvc.perform(get("/api/v1/users/{id}", 999999)
+                        .cookie(accessCookie))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("User not found"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = AccountStatus.class,
+            names = {"LOCKED", "DISABLED", "DELETED"}
+    )
+    void returnsResourceNotFoundForUnavailableUser(
+            AccountStatus accountStatus
+    ) throws Exception {
+        Cookie accessCookie = registerCurrentUser();
+        User target = saveUser(
+                accountStatus.name().toLowerCase() + "@example.com",
+                "Unavailable User"
+        );
+        target.changeAccountStatus(accountStatus);
+        userRepository.save(target);
+
+        mockMvc.perform(get("/api/v1/users/{id}", target.getId())
                         .cookie(accessCookie))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"))

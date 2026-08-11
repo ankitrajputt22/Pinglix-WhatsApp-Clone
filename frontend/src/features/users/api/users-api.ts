@@ -27,8 +27,9 @@ function isUserProfile(value: unknown): value is UserProfile {
 
   const profile = value as unknown as Record<string, unknown>;
   return (
-    typeof profile.accountStatus === "string" &&
-    typeof profile.createdAt === "string"
+    (profile.accountStatus === undefined ||
+      typeof profile.accountStatus === "string") &&
+    (profile.createdAt === undefined || typeof profile.createdAt === "string")
   );
 }
 
