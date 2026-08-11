@@ -25,4 +25,4 @@ pinglix:
     access-cookie-name: pinglix_access
     refresh-cookie-name: pinglix_refresh
     secure-cookie: ${PINGLIX_COOKIE_SECURE:false}
-    same-site: Lax
+    same-site: ${PINGLIX_COOKIE_SAME_SITE:Lax}

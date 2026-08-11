@@ -127,7 +127,32 @@ cd backend
 ./mvnw clean package
 ```
 
-More project details are available in the `docs` folder.
+More project details are available in the `docs` folder. Deployment notes are in
+[`docs/deployment.md`](docs/deployment.md).
+
+## Docker Image Builds
+
+Phase 12 includes Dockerfiles for a production-style image build. The backend
+image listens on port `8080`, and the frontend image serves the app through
+nginx on port `80`.
+
+```bash
+docker build -t pinglix-backend ./backend
+docker build \
+  --build-arg VITE_API_BASE_URL=http://localhost:8080 \
+  --build-arg VITE_WS_URL=ws://localhost:8080/ws \
+  -t pinglix-frontend ./frontend
+```
+
+The example Compose file is kept separate from local development:
+
+```bash
+cd infrastructure
+docker compose -f docker-compose.prod.example.yml config
+```
+
+Use an ignored `infrastructure/.env` file with real deployment values before
+starting that example. Never commit passwords, JWT secrets, or cloud keys.
 
 ## Development Phases
 
@@ -143,6 +168,7 @@ More project details are available in the `docs` folder.
 - Phase 9: Message status
 - Phase 10: Advanced messaging foundation
 - Phase 11: MVP stabilization, QA, and documentation
+- Phase 12: Deployment foundation and release preparation
 
 Each phase should be completed and tested before the next one starts.
 
